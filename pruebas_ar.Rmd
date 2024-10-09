@@ -1,0 +1,404 @@
+---
+title: "pruebas ar(1)"
+author: "Eduardo Rubio M"
+date: "02-09-2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Generamos la función para calcular la Corelación integral 
+
+```{r}
+# Definir la función para calcular la Corelación integral
+correlation_integral <- function(data, r, d) {
+  N <- length(data)
+  count <- 0
+  
+  # Iterar sobre todos los pares (i, j) tal que 1 <= i < j <= N-d+1
+  for (i in 1:(N-d)) {
+    for (j in (i+1):(N-d+1)) {
+      # Crear los vectores u_i^d y u_j^d
+      u_i_d <- data[i:(i+d-1)]
+      u_j_d <- data[j:(j+d-1)]
+      
+      # Calcular la distancia euclidiana entre u_i^d y u_j^d
+      distance <- sqrt(sum((u_i_d - u_j_d)^2))
+      
+      # Verificar si la distancia es menor que r
+      if (distance < r) {
+        count <- count + 1
+      }
+    }
+  }
+  
+  # Calcular C_N(r, d)
+  C_N <- (2 / (N^2)) * count
+  return(C_N)
+}
+
+
+
+```
+
+
+
+Ahora generamos la función para el X_n(r,d) 
+
+```{r}
+
+# Definir la función X_N(r, d)
+X_N <- function(data, r, d) {
+  C_N_d <- correlation_integral(data, r, d)
+  C_N_d_minus_1 <- correlation_integral(data, r, d-1)
+  C_N_d_plus_1 <- correlation_integral(data, r, d+1)
+  
+  X_N_value <- (C_N_d^2) / (C_N_d_minus_1 * C_N_d_plus_1)
+  return(X_N_value)
+}
+
+# Caso especial para d = 1
+X_N_d_1 <- function(data, r) {
+  C_N_1 <- correlation_integral(data, r, 1)
+  C_N_2 <- correlation_integral(data, r, 2)
+  
+  X_N_value <- (C_N_1^2) / C_N_2
+  return(X_N_value)
+}
+
+
+```
+
+
+
+pruebas con caso AR(1)
+
+Generamos 1000 series de 1000 observaciones 
+
+
+```{r}
+
+set.seed(125)  # Fijamos la semilla 
+
+# Definimos parámetros
+n_series <- 1000   # Número de series a generar
+n_obs <- 1000      # Número de observaciones por serie
+phi <- 0.5        # Coeficiente AR(1)
+sigma <- 1        # Desviación estándar del ruido
+
+# Matriz para almacenar las series AR(1)
+ar1_series <- matrix(0, nrow = n_obs, ncol = n_series)
+
+# Generamos las series AR(1)
+for (i in 1:n_series) {
+  ar1_series[, i] <- arima.sim(n = n_obs, list(ar = phi), sd = sigma)
+}
+
+
+
+
+```
+
+Obtenemos los valores de $X_{N}(r,d)$ para los casos d=1 hasta d=5
+
+
+```{r}
+# Parámetros
+r <- 1  # Umbral para la norma
+d_values <- 1:5  # Valores de d
+
+# Inicializar listas para almacenar los resultados
+X_N_results_ar <- matrix(0, nrow = n_series, ncol = length(d_values))
+colnames(X_N_results_ar) <- paste("d =", d_values)
+
+# Calcular X_{N}(r,d) para cada serie y para cada valor de d
+for (i in 1:n_series) {
+  series <- ar1_series[i, ]
+  
+  # Caso especial para d = 1
+  X_N_results_ar[i, 1] <- X_N_d_1(series, r)
+  
+  # Calcular X_{N}(r,d) para d = 2, 3, 4, 5
+  for (d in 2:length(d_values)) {
+    X_N_results_ar[i, d] <- X_N(series, r, d_values[d])
+  }
+}
+
+# Ver los resultados
+head(X_N_results_ar)
+
+
+
+```
+
+
+
+
+```{r}
+
+X_N_results_ar
+
+```
+
+
+Veamos como se comporta $X_{N}(r,d)$ para este caso
+
+```{r}
+
+# Resumen de los resultados
+summary(X_N_results_ar)
+
+# Graficar los resultados
+boxplot(X_N_results_ar, main="Distribución de X_{N}(r,d) para diferentes d", ylab="X_{N}(r,d)", xlab="d")
+
+# Crear el QQ plot
+
+for (i in 1:ncol(X_N_results_ar)) {
+  qqnorm(X_N_results_ar[, i], main = paste("QQ Plot - Caso d=", i))
+  qqline(X_N_results_ar[, i], col = "red")
+}
+
+
+```
+Se puedo observar en los gráficos que se mantiene y hasta se ve de manera mas clara la tendencia.
+
+
+```{r}
+
+# Longitud de cada serie
+N <- 1000
+
+# Calcular sqrt(N)
+sqrt_N <- sqrt(N)
+
+# Calcular sqrt(N) * ln(X_{N}(r,d)) para cada serie y cada valor de d
+sqrt_N_ln_X_N_ar <- sqrt_N * log(X_N_results_ar)
+
+# Ver los resultados
+head(sqrt_N_ln_X_N_ar)
+
+
+```
+y vemos como se comporta:
+
+```{r}
+
+# Resumen de los resultados
+summary(sqrt_N_ln_X_N_ar)
+
+# Graficar los resultados 
+boxplot(sqrt_N_ln_X_N_ar, main="Distribución caso Autoregresivo para diferentes d", ylab="sqrt_N_ln_X_N", xlab="d")
+
+
+# Crear el QQ plot
+
+for (i in 1:ncol(sqrt_N_ln_X_N_ar)) {
+  qqnorm(sqrt_N_ln_X_N_ar[, i], main = paste("gráfico Q-Q caso Autoregresivo  d=", i))
+  qqline(sqrt_N_ln_X_N_ar[, i], col = "red")
+}
+
+
+
+
+```
+
+Para el caso $AR(1)$ también se pudo observar que $\sqrt{N} ln(X_{N}(r,d))$ mantenía una tendencia a normalidad asintótica en menor medida, teniendo problemas mas tempranos con los valores de $d$ en contratarte con el caso IID, también al aumentar de 100 a 500 y a 1000 series se pudo observar aun mas el aumento de esta tendencia. Durante las pruebas con 500 series para el caso d=5 algunas casos obtenían correlaciones integrales 0, por lo que valores indefinidos para $X_{N}(r,d)$, esto no se dio en la prueba con 1000 series $AR(1)$.
+
+########################################
+
+```{r}
+library(MASS)
+
+```
+
+test por aplicar:
+
+
+
+```{r}
+
+# Función Shapiro-Wilk test
+shapiro_test <- function(series) {
+  # Shapiro-Wilk test
+  shapiro.test(series)
+}
+
+# Aplicar el Shapiro-Wilk test a cada columna 
+shapiro_results <- apply(sqrt_N_ln_X_N_ar, 2, function(column) {
+  # Quitar valores NA
+  column <- na.omit(column)
+  shapiro_test(column)
+})
+
+# p-values
+shapiro_p_values <- sapply(shapiro_results, function(x) x$p.value)
+
+
+shapiro_p_values
+
+
+```
+
+```{r}
+# Función del Kolmogorov-Smirnov test
+ks_test <- function(series) {
+  # K-S test comparando la serie a una distribución normal 
+  ks.test(series, "pnorm", mean = mean(series), sd = sd(series))
+}
+
+# Aplicar el K-S test a cada columna
+ks_results <- apply(sqrt_N_ln_X_N_ar, 2, function(column) {
+  # Remove NA values if they exist
+  column <- na.omit(column)
+  ks_test(column)
+})
+
+# p-values
+ks_p_values <- sapply(ks_results, function(x) x$p.value)
+
+
+ks_p_values
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+

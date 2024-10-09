@@ -1,0 +1,990 @@
+---
+title: "pruebas iid"
+author: "Eduardo Rubio M"
+date: "28-04-2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Primero estamos probando generar series IID para ver como se comporta el estadistico X_n(r,d)
+
+```{r}
+
+# Generar las series IID
+set.seed(125)
+N <- 1000  # Longitud de la serie
+data <- rnorm(N)
+
+
+```
+
+
+Generamos la función para calcular la Corelación integral según nuestra definición que sería una dependiente de 3 inputs, la serie "data" con su tamaño, la distancia fijada r y la dimensión d.
+
+```{r}
+# Definir la función para calcular la Corelación integral
+correlation_integral <- function(data, r, d) {
+  N <- length(data)
+  count <- 0
+  
+  # Iterar sobre todos los pares (i, j) tal que 1 <= i < j <= N-d+1
+  for (i in 1:(N-d)) {
+    for (j in (i+1):(N-d+1)) {
+      # Crear los vectores u_i^d y u_j^d
+      u_i_d <- data[i:(i+d-1)]
+      u_j_d <- data[j:(j+d-1)]
+      
+      # Calcular la distancia euclidiana entre u_i^d y u_j^d
+      distance <- sqrt(sum((u_i_d - u_j_d)^2))
+      
+      # Verificar si la distancia es menor que r
+      if (distance < r) {
+        count <- count + 1
+      }
+    }
+  }
+  
+  # Calcular C_N(r, d)
+  C_N <- (2 / (N^2)) * count
+  return(C_N)
+}
+
+
+
+```
+
+Probamos para distintos casos de d y r como funciona la función.
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 3    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 4    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 5    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 7    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 10    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 0.1  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 1  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+
+```{r}
+# Parámetros
+r <- 5  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+
+```{r}
+# Parámetros
+r <- 10  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular la correlación integral
+C_N_value <- correlation_integral(data, r, d)
+C_N_value
+
+
+
+```
+Verificamos que la función se comporta según lo esperado y para r muy grande tiende a acercarse a 1. También mientras se aumenta d la correlación integral es afectada inversamente. para d>8 ya empiezan a solo sumarse 0s.
+
+Dejemos de ejemplo para d=2 y r=0.5
+
+
+
+Ahora generamos la función para el X_n(r,d) utilizando la función de correlación integral.
+Por la definición de esta para d=1 se tiene el caso particular y a partir de ahi tiene su definición con respecto a correlaciones integrales para d-1 y d+1
+
+```{r}
+
+# Definir la función X_N(r, d)
+X_N <- function(data, r, d) {
+  C_N_d <- correlation_integral(data, r, d)
+  C_N_d_minus_1 <- correlation_integral(data, r, d-1)
+  C_N_d_plus_1 <- correlation_integral(data, r, d+1)
+  
+  X_N_value <- (C_N_d^2) / (C_N_d_minus_1 * C_N_d_plus_1)
+  return(X_N_value)
+}
+
+# Caso especial para d = 1
+X_N_d_1 <- function(data, r) {
+  C_N_1 <- correlation_integral(data, r, 1)
+  C_N_2 <- correlation_integral(data, r, 2)
+  
+  X_N_value <- (C_N_1^2) / C_N_2
+  return(X_N_value)
+}
+
+
+```
+
+Probemos calcular para d=2 y d=1
+
+
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+# Calcular X_N(r, 1)
+X_N_value_d_1 <- X_N_d_1(data, r)
+X_N_value_d_1
+
+
+```
+probemos como va con distintos d y r
+
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 3    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+
+
+
+```
+
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 4    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+
+
+
+```
+
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 5    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+
+
+
+```
+
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 6    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+
+
+
+```
+```{r}
+
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d <- 10    # Dimensión del espacio fase
+
+# Calcular X_N(r, d)
+X_N_value <- X_N(data, r, d)
+X_N_value
+
+
+
+
+```
+dado que la funcion correlación integral sobre el d=8 genera 0s, esta función que divide por correlaciones previas y siguientes desde el d=7 genera problemas. (Por revisar)
+
+
+
+Veamos como funciona para multiples series IID
+
+```{r}
+
+# Generar múltiples series IID
+set.seed(125)
+n_series <- 100  # Número de series
+length_series <- 1000  # Longitud de cada serie
+
+# Crear una matriz donde cada fila es una serie IID
+data_matrix <- matrix(rnorm(n_series * length_series), nrow = n_series, ncol = length_series)
+
+
+```
+
+
+```{r}
+
+# Definir parámetros
+r <- 0.5  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Inicializar vectores para almacenar los resultados
+X_N_values <- numeric(n_series)
+X_N_values_d_1 <- numeric(n_series)
+
+# Calcular X_{N}(r,d) para cada serie
+for (i in 1:n_series) {
+  series <- data_matrix[i, ]
+  X_N_values[i] <- X_N(series, r, d)
+  X_N_values_d_1[i] <- X_N_d_1(series, r)
+}
+
+# Ver los resultados
+X_N_values
+X_N_values_d_1
+
+
+```
+
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d_values <- 1:5  # Valores de d
+
+# Inicializar listas para almacenar los resultados
+X_N_results <- matrix(0, nrow = n_series, ncol = length(d_values))
+colnames(X_N_results) <- paste("d =", d_values)
+
+# Calcular X_{N}(r,d) para cada serie y para cada valor de d
+for (i in 1:n_series) {
+  series <- data_matrix[i, ]
+  
+  # Caso especial para d = 1
+  X_N_results[i, 1] <- X_N_d_1(series, r)
+  
+  # Calcular X_{N}(r,d) para d = 2, 3, 4, 5
+  for (d in 2:length(d_values)) {
+    X_N_results[i, d] <- X_N(series, r, d_values[d])
+  }
+}
+
+# Ver los resultados
+head(X_N_results)
+
+
+
+```
+Veamos como se comporta X_{N}(r,d) para este caso
+
+```{r}
+
+# Resumen de los resultados
+summary(X_N_results)
+
+# Graficar los resultados
+boxplot(X_N_results, main="Distribución de X_{N}(r,d) para diferentes d", ylab="X_{N}(r,d)", xlab="d")
+
+# Crear el QQ plot
+
+for (i in 1:ncol(X_N_results)) {
+  qqnorm(X_N_results[, i], main = paste("QQ Plot - Caso d=", i))
+  qqline(X_N_results[, i], col = "red")
+}
+
+
+```
+
+Ya estando mas cerca del estadistico completo calculamos $\sqrt{N} ln(X_{N}(r,d))$
+
+
+
+```{r}
+
+# Longitud de cada serie
+N <- length_series  # Esto es igual a 1000 en nuestro caso
+
+# Calcular sqrt(N)
+sqrt_N <- sqrt(N)
+
+# Calcular sqrt(N) * ln(X_{N}(r,d)) para cada serie y cada valor de d
+sqrt_N_ln_X_N <- sqrt_N * log(X_N_results)
+
+# Ver los resultados
+head(sqrt_N_ln_X_N)
+
+
+```
+y vemos como se comporta:
+
+```{r}
+
+# Resumen de los resultados
+summary(sqrt_N_ln_X_N)
+
+# Graficar los resultados 
+boxplot(sqrt_N_ln_X_N, main="Distribución de sqrt_N_ln_X_N para diferentes d", ylab="sqrt_N_ln_X_N", xlab="d")
+
+
+# Crear el QQ plot
+
+for (i in 1:ncol(sqrt_N_ln_X_N)) {
+  qqnorm(sqrt_N_ln_X_N[, i], main = paste("QQ Plot - Caso d=", i))
+  qqline(sqrt_N_ln_X_N[, i], col = "red")
+}
+
+
+
+
+```
+
+
+```{r}
+
+# Calcular la desviación estándar para cada valor de d
+std_dev_values <- apply(sqrt_N_ln_X_N, 2, sd)
+
+# Ver los resultados
+std_dev_values
+
+
+```
+########################################
+
+```{r}
+library(MASS)
+
+```
+
+Distintos test por aplicar:
+
+Falta investigar mas
+
+
+```{r}
+
+# Función Shapiro-Wilk test
+shapiro_test <- function(series) {
+  # Shapiro-Wilk test
+  shapiro.test(series)
+}
+
+# Aplicar el Shapiro-Wilk test a cada columna 
+shapiro_results <- apply(sqrt_N_ln_X_N, 2, function(column) {
+  # Quitar valores NA
+  column <- na.omit(column)
+  shapiro_test(column)
+})
+
+# p-values
+shapiro_p_values <- sapply(shapiro_results, function(x) x$p.value)
+
+
+shapiro_p_values
+
+
+```
+
+
+```{r}
+# Función del Kolmogorov-Smirnov test
+ks_test <- function(series) {
+  # K-S test comparando la serie a una distribución normal 
+  ks.test(series, "pnorm", mean = mean(series), sd = sd(series))
+}
+
+# Aplicar el K-S test a cada columna
+ks_results <- apply(sqrt_N_ln_X_N, 2, function(column) {
+  # Remove NA values if they exist
+  column <- na.omit(column)
+  ks_test(column)
+})
+
+# p-values
+ks_p_values <- sapply(ks_results, function(x) x$p.value)
+
+
+ks_p_values
+
+
+
+```
+
+
+```{r}
+
+# Función para el test chi-square para la varianza 
+std_dev_test <- function(series, sigma_0) {
+  n <- length(series)
+  s2 <- var(series)  # varianza de muestra
+  
+  # Chi-square test statistic
+  chi_square_stat <- (n - 1) * s2 / sigma_0^2
+  
+  # Grados de libertad
+  df <- n - 1
+  
+  # p-value
+  p_value <- 2 * min(pchisq(chi_square_stat, df), 1 - pchisq(chi_square_stat, df))
+  
+  return(list(chi_square_stat = chi_square_stat, p_value = p_value))
+}
+
+
+sigma_0 <- 1  # valor según la hipothesis
+
+# Aplicar el test a cada columna
+std_dev_results <- apply(sqrt_N_ln_X_N, 2, function(column) {
+  # Quitar valores NA values
+  column <- na.omit(column)
+  std_dev_test(column, sigma_0)
+})
+
+# p-values y chi-square statistics 
+std_dev_p_values <- sapply(std_dev_results, function(x) x$p_value)
+chi_square_stats <- sapply(std_dev_results, function(x) x$chi_square_stat)
+
+# p-values
+std_dev_p_values
+
+# chi-square statistics
+chi_square_stats
+
+
+```
+#################################
+
+
+pruebas con caso AR(1)
+
+
+```{r}
+
+set.seed(125)  # Fijamos la semilla 
+
+# Definimos parámetros
+n_series <- 100   # Número de series a generar
+n_obs <- 1000      # Número de observaciones por serie
+phi <- 0.5        # Coeficiente AR(1)
+sigma <- 1        # Desviación estándar del ruido
+
+# Matriz para almacenar las series AR(1)
+ar1_series <- matrix(0, nrow = n_obs, ncol = n_series)
+
+# Generamos las series AR(1)
+for (i in 1:n_series) {
+  ar1_series[, i] <- arima.sim(n = n_obs, list(ar = phi), sd = sigma)
+}
+
+# Muestra de las primeras series generadas
+head(ar1_series)
+
+
+```
+```{r}
+
+# Definir parámetros
+r <- 0.5  # Umbral para la norma
+d <- 2    # Dimensión del espacio fase
+
+# Inicializar vectores para almacenar los resultados
+X_N_values_ar <- numeric(n_series)
+X_N_values_ar_d_1 <- numeric(n_series)
+
+# Calcular X_{N}(r,d) para cada serie
+for (i in 1:n_series) {
+  series <- ar1_series[i, ]
+  X_N_values_ar[i] <- X_N(series, r, d)
+  X_N_values_ar_d_1[i] <- X_N_d_1(series, r)
+}
+
+# Ver los resultados
+X_N_values_ar
+X_N_values_ar_d_1
+
+
+```
+
+Veamos como se comporta X_{N}(r,d) para este caso
+
+```{r}
+
+# Resumen de los resultados
+summary(X_N_values_ar)
+
+# Graficar los resultados
+boxplot(X_N_values_ar, main="Distribución de X_{N}(r,d) ", ylab="X_{N}(r,d)", xlab="d")
+
+# Crear el QQ plot
+
+
+  qqnorm(X_N_values_ar, main = paste("QQ Plot - Caso d=", 2))
+  qqline(X_N_values_ar, col = "red")
+
+
+
+```
+calculamos $\sqrt{N} ln(X_{N}(r,d))$
+
+
+
+```{r}
+
+# Longitud de cada serie
+N <- length_series  # Esto es igual a 1000 en nuestro caso
+
+# Calcular sqrt(N)
+sqrt_N <- sqrt(N)
+
+# Calcular sqrt(N) * ln(X_{N}(r,d)) para cada serie
+sqrt_N_ln_X_N_ar <- sqrt_N * log(X_N_values_ar)
+
+# Ver los resultados
+head(sqrt_N_ln_X_N_ar)
+
+
+```
+y vemos como se comporta:
+
+```{r}
+
+# Resumen de los resultados
+summary(sqrt_N_ln_X_N_ar)
+
+# Graficar los resultados 
+boxplot(sqrt_N_ln_X_N_ar, main="Distribución de sqrt_N_ln_X_N ", ylab="sqrt_N_ln_X_N", xlab="d")
+
+
+# Crear el QQ plot
+
+  qqnorm(sqrt_N_ln_X_N_ar, main = paste("QQ Plot - Caso d=", 2))
+  qqline(sqrt_N_ln_X_N_ar, col = "red")
+
+
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+
+
+
+
+###########################
+
+
+Pruebas de estimaciones para la varianza, aun con problemas debido a los problemas heredados de las funciones de correlacion integral y X_{N}(r,d), falta por investigar metodos de de estimación.
+
+```{r}
+
+# r constante dada
+r <- 1
+
+# Matriz para guardar los resultados
+n_series <- nrow(data_matrix)
+d_values <- 1:10
+correlation_results <- matrix(NA, nrow = n_series, ncol = length(d_values))
+colnames(correlation_results) <- paste0("d = ", d_values)
+
+# Aplicar la correlación integral a cada serie por cada d
+for (i in 1:n_series) {
+  for (d in d_values) {
+    correlation_results[i, paste0("d = ", d)] <- correlation_integral(data_matrix[i, ], r, d)
+  }
+}
+
+
+head(correlation_results)
+
+```
+
+
+```{r}
+# Calculo de Varianza
+calculate_variance <- function(series) {
+  return(var(series, na.rm = TRUE))
+}
+
+# Función para calcular *sigma_r_d^2 para cada d
+calculate_star_sigma <- function(variance_values, correlation_results, r, d, series_index) {
+  # Calculos sacados de la matriz anterior de correlaciones integrales
+  C_N_2d_minus_2 <- correlation_results[series_index, paste0("d = ", 2*(d-1))]
+  C_N_2d <- correlation_results[series_index, paste0("d = ", 2*d)]
+  C_N_2d_plus_2 <- correlation_results[series_index, paste0("d = ", 2*(d+1))]
+  
+  # Obtener las varianzas según cada d
+  sigma_r_d_minus_1_sq <- variance_values[d-1]
+  sigma_r_d_sq <- variance_values[d]
+  sigma_r_d_plus_1_sq <- variance_values[d+1]
+  
+  # Calcular *sigma_r_d^2
+  star_sigma_r_d_sq <- (sigma_r_d_minus_1_sq / C_N_2d_minus_2) +
+                       (4 * sigma_r_d_sq / C_N_2d) +
+                       (sigma_r_d_plus_1_sq / C_N_2d_plus_2)
+  
+  return(star_sigma_r_d_sq)
+}
+
+# r constante dada
+r <- 0.5
+
+# Calcular varianzas para cada d por cada serie en data_matrix
+n_series <- nrow(data_matrix)
+d_values <- 2:4  # para d = 2, 3, 4
+
+# Matriz para guardar los resultados star_sigma_r_d^2
+star_sigma_results <- matrix(NA, nrow = n_series, ncol = length(d_values))
+colnames(star_sigma_results) <- paste0("d = ", d_values)
+
+# Loop wn cada serie para calcular *sigma_r_d^2
+for (i in 1:n_series) {
+  # Calcular las varianzas para cada serie
+  variance_values <- sapply(1:10, function(d) calculate_variance(data_matrix[i, ]))
+  
+  # Calcular *sigma_r_d^2 para cada d entre 2 y 4
+  for (d in d_values) {
+    star_sigma_results[i, paste0("d = ", d)] <- calculate_star_sigma(variance_values, correlation_results, r, d, i)
+  }
+}
+
+
+head(star_sigma_results)
+
+
+```
+
+
+
+
+```{r}
+
+
+# r constante dada
+r <- 0.5
+
+# Matriz para guardar los resultados
+n_series <- nrow(data_matrix)
+d_values <- 1:10
+correlation_results <- matrix(NA, nrow = n_series, ncol = length(d_values))
+colnames(correlation_results) <- paste0("d = ", d_values)
+
+# Aplicar la correlación integral a cada serie por cada d
+for (i in 1:n_series) {
+  for (d in d_values) {
+    correlation_results[i, paste0("d = ", d)] <- correlation_integral(data_matrix[i, ], r, d)
+  }
+}
+
+
+head(correlation_results)
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+

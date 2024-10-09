@@ -1,0 +1,314 @@
+---
+title: "pruebas iid"
+author: "Eduardo Rubio M"
+date: "04-09-2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Generamos la función para calcular la Correlación integral
+
+```{r}
+# Definir la función para calcular la Corelación integral
+correlation_integral <- function(data, r, d) {
+  N <- length(data)
+  count <- 0
+  
+  # Iterar sobre todos los pares (i, j) tal que 1 <= i < j <= N-d+1
+  for (i in 1:(N-d)) {
+    for (j in (i+1):(N-d+1)) {
+      # Crear los vectores u_i^d y u_j^d
+      u_i_d <- data[i:(i+d-1)]
+      u_j_d <- data[j:(j+d-1)]
+      
+      # Calcular la distancia euclidiana entre u_i^d y u_j^d
+      distance <- sqrt(sum((u_i_d - u_j_d)^2))
+      
+      # Verificar si la distancia es menor que r
+      if (distance < r) {
+        count <- count + 1
+      }
+    }
+  }
+  
+  # Calcular C_N(r, d)
+  C_N <- (2 / (N^2)) * count
+  return(C_N)
+}
+
+
+
+```
+
+
+Ahora generamos la función para el X_n(r,d) 
+
+```{r}
+
+# Definir la función X_N(r, d)
+X_N <- function(data, r, d) {
+  C_N_d <- correlation_integral(data, r, d)
+  C_N_d_minus_1 <- correlation_integral(data, r, d-1)
+  C_N_d_plus_1 <- correlation_integral(data, r, d+1)
+  
+  X_N_value <- (C_N_d^2) / (C_N_d_minus_1 * C_N_d_plus_1)
+  return(X_N_value)
+}
+
+# Caso especial para d = 1
+X_N_d_1 <- function(data, r) {
+  C_N_1 <- correlation_integral(data, r, 1)
+  C_N_2 <- correlation_integral(data, r, 2)
+  
+  X_N_value <- (C_N_1^2) / C_N_2
+  return(X_N_value)
+}
+
+
+```
+
+
+
+Veamos como funciona para múltiples series IID, esta vez con 1000 series de 1000 observaciones.
+
+```{r}
+
+# Generar múltiples series IID
+set.seed(125)
+n_series <- 1000  # Número de series
+length_series <- 1000  # Longitud de cada serie
+
+# Crear una matriz donde cada fila es una serie IID
+data_matrix <- matrix(rnorm(n_series * length_series), nrow = n_series, ncol = length_series)
+
+
+```
+
+
+
+```{r}
+# Parámetros
+r <- 0.5  # Umbral para la norma
+d_values <- 1:5  # Valores de d
+
+# Inicializar listas para almacenar los resultados
+X_N_results <- matrix(0, nrow = n_series, ncol = length(d_values))
+colnames(X_N_results) <- paste("d =", d_values)
+
+# Calcular X_{N}(r,d) para cada serie y para cada valor de d
+for (i in 1:n_series) {
+  series <- data_matrix[i, ]
+  
+  # Caso especial para d = 1
+  X_N_results[i, 1] <- X_N_d_1(series, r)
+  
+  # Calcular X_{N}(r,d) para d = 2, 3, 4, 5
+  for (d in 2:length(d_values)) {
+    X_N_results[i, d] <- X_N(series, r, d_values[d])
+  }
+}
+
+# Ver los resultados
+head(X_N_results)
+
+
+
+```
+Veamos como se comporta X_{N}(r,d) para este caso
+
+```{r}
+
+# Resumen de los resultados
+summary(X_N_results)
+
+# Graficar los resultados
+boxplot(X_N_results, main="Distribución de X_{N}(r,d) para diferentes d", ylab="X_{N}(r,d)", xlab="d")
+
+# Crear el QQ plot
+
+for (i in 1:ncol(X_N_results)) {
+  qqnorm(X_N_results[, i], main = paste("Gráfico Q-Q - Caso d=", i))
+  qqline(X_N_results[, i], col = "red")
+}
+
+
+```
+Esta vez al aumentar en numero de series se puede observar de manera mas clara la tendencia, sobre todo en los casos d=1,2,3 , mientras que en los casos d=4 y d=5 parece desviarse en los extremos.
+
+
+
+Calculamos $\sqrt{N} ln(X_{N}(r,d))$
+
+
+
+```{r}
+
+# Longitud de cada serie
+N <- length_series  # Esto es igual a 1000 en nuestro caso
+
+# Calcular sqrt(N)
+sqrt_N <- sqrt(N)
+
+# Calcular sqrt(N) * ln(X_{N}(r,d)) para cada serie y cada valor de d
+sqrt_N_ln_X_N <- sqrt_N * log(X_N_results)
+
+# Ver los resultados
+head(sqrt_N_ln_X_N)
+
+
+```
+y vemos como se comporta:
+
+```{r}
+
+# Resumen de los resultados
+summary(sqrt_N_ln_X_N)
+
+# Graficar los resultados 
+boxplot(sqrt_N_ln_X_N, main="Distribución para diferentes d", ylab="sqrt_N_ln_X_N", xlab="d")
+
+
+# Crear el QQ plot
+
+for (i in 1:ncol(sqrt_N_ln_X_N)) {
+  qqnorm(sqrt_N_ln_X_N[, i], main = paste("Gráfico Q-Q - Caso d=", i))
+  qqline(sqrt_N_ln_X_N[, i], col = "red")
+}
+
+
+
+
+```
+
+De la misma manera para $\sqrt{N} ln(X_{N}(r,d))$ se tiene mucho mas clara la tendencia de los datos, esta vez sin tanto desvió como para el caso anterior, mostrando las propiedades de este estadístico.
+
+
+
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
